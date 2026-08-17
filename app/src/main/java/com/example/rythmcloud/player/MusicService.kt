@@ -3,14 +3,18 @@ package com.example.rythmcloud.player
 import android.app.PendingIntent
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.example.rythmcloud.other.Constants.MEDIA_ROOT_ID
 import com.example.rythmcloud.player.callbacks.MusicPlaybackPreparer
 import com.example.rythmcloud.player.callbacks.MusicPlayerEventListener
 import com.example.rythmcloud.player.callbacks.MusicPlayerNotificationListener
 import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -95,12 +99,26 @@ class MusicService : MediaBrowserServiceCompat() {
 
         mediaSessionConnector = MediaSessionConnector(mediaSession)
         mediaSessionConnector.setPlaybackPreparer(musicPlaybackPreparer)
+        mediaSessionConnector.setQueueNavigator(MusicQueueNavigator())
         mediaSessionConnector.setPlayer(exoPlayer)
 
         exoPlayer.addListener(MusicPlayerEventListener(this))
         musicNotificationManager.showNotification(exoPlayer)
     }
 
+
+    private inner class MusicQueueNavigator: TimelineQueueNavigator(mediaSession){
+        override fun getMediaDescription(
+            player: Player,
+            windowIndex: Int
+        ): MediaDescriptionCompat {
+//            TODO("Not yet implemented")
+
+            return backendMusicSource.songs[windowIndex].description
+
+
+        }
+    }
 
     private fun preparePlayer(
         songs: List<MediaMetadataCompat>,
@@ -118,18 +136,30 @@ class MusicService : MediaBrowserServiceCompat() {
         servicescope.cancel()
     }
 
+
+    //
     override fun onGetRoot(
         clientPackageName: String,
         clientUid: Int,
         rootHints: Bundle?
     ): BrowserRoot? {
-        TODO("Not yet implemented")
+        return BrowserRoot(MEDIA_ROOT_ID, null)
     }
 
     override fun onLoadChildren(
         parentId: String,
         result: Result<List<MediaBrowserCompat.MediaItem?>?>
     ) {
-        TODO("Not yet implemented")
+        when(parentId){
+            MEDIA_ROOT_ID -> {
+                val resultSent = backendMusicSource.whenReady { isIni ->
+                    if(isIni){
+                        result.sendResult(backendMusicSource.asMediaItems())
+
+                    }
+
+                }
+            }
+        }
     }
 }
