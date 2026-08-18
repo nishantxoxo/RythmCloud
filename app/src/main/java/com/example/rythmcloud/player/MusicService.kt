@@ -1,6 +1,7 @@
 package com.example.rythmcloud.player
 
 import android.app.PendingIntent
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
@@ -8,6 +9,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.example.rythmcloud.other.Constants.MEDIA_ROOT_ID
+import com.example.rythmcloud.other.Constants.NETWORK_ERROR
 import com.example.rythmcloud.player.callbacks.MusicPlaybackPreparer
 import com.example.rythmcloud.player.callbacks.MusicPlayerEventListener
 import com.example.rythmcloud.player.callbacks.MusicPlayerNotificationListener
@@ -54,8 +56,14 @@ class MusicService : MediaBrowserServiceCompat() {
 
 
     private var curPlayingSong: MediaMetadataCompat? = null
+    private var isPlayerInitialized = false
 
+    private lateinit var MusicPlayerEventListener: MusicPlayerEventListener
 
+    companion object {
+        var curSongDuration  =0L
+            private set
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -83,6 +91,7 @@ class MusicService : MediaBrowserServiceCompat() {
             MusicPlayerNotificationListener(this)
         ) {
 //            newSongCallback()
+            curSongDuration = exoPlayer.duration
         }
 
         val musicPlaybackPreparer = MusicPlaybackPreparer(backendMusicSource){
@@ -101,8 +110,8 @@ class MusicService : MediaBrowserServiceCompat() {
         mediaSessionConnector.setPlaybackPreparer(musicPlaybackPreparer)
         mediaSessionConnector.setQueueNavigator(MusicQueueNavigator())
         mediaSessionConnector.setPlayer(exoPlayer)
-
-        exoPlayer.addListener(MusicPlayerEventListener(this))
+        MusicPlayerEventListener = MusicPlayerEventListener(this)
+        exoPlayer.addListener(MusicPlayerEventListener)
         musicNotificationManager.showNotification(exoPlayer)
     }
 
@@ -131,9 +140,19 @@ class MusicService : MediaBrowserServiceCompat() {
         exoPlayer.playWhenReady = playNow
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+
+        exoPlayer.stop()
+
+    }
+
+
     override fun onDestroy() {
         super.onDestroy()
         servicescope.cancel()
+        exoPlayer.removeListener(MusicPlayerEventListener)
+        exoPlayer.release()
     }
 
 
@@ -155,9 +174,20 @@ class MusicService : MediaBrowserServiceCompat() {
                 val resultSent = backendMusicSource.whenReady { isIni ->
                     if(isIni){
                         result.sendResult(backendMusicSource.asMediaItems())
+                        if(!isPlayerInitialized && backendMusicSource.songs.isNotEmpty()){
+                            preparePlayer(backendMusicSource.songs, backendMusicSource.songs[0], false)
+                            isPlayerInitialized = true
+                        }
+                    }
+                    else{
+                        mediaSession.sendSessionEvent(NETWORK_ERROR, null)
+                        result.sendResult(null)
 
                     }
 
+                }
+                if(!resultSent){
+                    result.detach()
                 }
             }
         }
