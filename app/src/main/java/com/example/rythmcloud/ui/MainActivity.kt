@@ -1,16 +1,12 @@
-package com.example.rythmcloud
+package com.example.rythmcloud.ui
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.example.rythmcloud.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-
-
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
