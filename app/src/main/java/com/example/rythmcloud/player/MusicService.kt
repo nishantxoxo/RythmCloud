@@ -90,18 +90,18 @@ class MusicService : MediaBrowserServiceCompat() {
             mediaSession.sessionToken,
             MusicPlayerNotificationListener(this)
         ) {
-//            newSongCallback()
             curSongDuration = exoPlayer.duration
         }
 
         val musicPlaybackPreparer = MusicPlaybackPreparer(backendMusicSource){
-
-            curPlayingSong = it
-               preparePlayer(
-                backendMusicSource.songs,
-                it,
-                true
-            )
+            servicescope.launch {
+                curPlayingSong = it
+                preparePlayer(
+                    backendMusicSource.songs,
+                    it,
+                    true
+                )
+            }
         }
 
 
@@ -172,17 +172,18 @@ class MusicService : MediaBrowserServiceCompat() {
         when(parentId){
             MEDIA_ROOT_ID -> {
                 val resultSent = backendMusicSource.whenReady { isIni ->
-                    if(isIni){
-                        result.sendResult(backendMusicSource.asMediaItems())
-                        if(!isPlayerInitialized && backendMusicSource.songs.isNotEmpty()){
-                            preparePlayer(backendMusicSource.songs, backendMusicSource.songs[0], false)
-                            isPlayerInitialized = true
+                    servicescope.launch {
+                        if(isIni){
+                            result.sendResult(backendMusicSource.asMediaItems())
+                            if(!isPlayerInitialized && backendMusicSource.songs.isNotEmpty()){
+                                preparePlayer(backendMusicSource.songs, backendMusicSource.songs[0], false)
+                                isPlayerInitialized = true
+                            }
                         }
-                    }
-                    else{
-                        mediaSession.sendSessionEvent(NETWORK_ERROR, null)
-                        result.sendResult(null)
-
+                        else{
+                            mediaSession.sendSessionEvent(NETWORK_ERROR, null)
+                            result.sendResult(null)
+                        }
                     }
 
                 }

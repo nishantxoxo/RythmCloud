@@ -10,26 +10,25 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 
 class MusicPlayerNotificationListener(
     private val musicService: MusicService
-
-): PlayerNotificationManager.NotificationListener {
+) : PlayerNotificationManager.NotificationListener {
     override fun onNotificationPosted(
         notificationId: Int,
-        notification: Notification?,
+        notification: Notification,
         ongoing: Boolean
     ) {
         super.onNotificationPosted(notificationId, notification, ongoing)
 
         musicService.apply {
-            if(ongoing && !isForegroundService){
-//                startForeground(notificationId, notification)
-
+            if (ongoing && !isForegroundService) {
                 ContextCompat.startForegroundService(
-                    this, Intent(applicationContext, this::class.java)
+                    this,
+                    Intent(applicationContext, this::class.java)
                 )
                 startForeground(NOTIFICATIONID, notification)
                 isForegroundService = true
+            }
         }
-    }}
+    }
 
     override fun onNotificationCancelled(
         notificationId: Int,

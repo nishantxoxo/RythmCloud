@@ -28,7 +28,25 @@ const getAllSongs = async (req, res) => {
     }
 };
 
+const deleteAllSongs = async (req, res) => {
+    try {
+        const result = await songService.deleteAllSongs();
+
+        res.json({
+            message: "All songs deleted successfully",
+            deletedCount: result.count
+        });
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to delete songs"
+        });
+    }
+};
+
 module.exports = {
     createSong,
-    getAllSongs
+    getAllSongs,
+    deleteAllSongs
 };

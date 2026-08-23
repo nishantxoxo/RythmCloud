@@ -14,7 +14,12 @@ const getAllSongs = async () => {
     });
 };
 
+const deleteAllSongs = async () => {
+    return await prisma.song.deleteMany({});
+};
+
 module.exports = {
     createSong,
-    getAllSongs
+    getAllSongs,
+    deleteAllSongs
 };

@@ -51,10 +51,9 @@ class BackendMusicSource  @Inject constructor(
     fun asMediaSource(dataSourceFactory: DefaultDataSourceFactory): ConcatenatingMediaSource{
         val concatenatingMediaSource = ConcatenatingMediaSource()
         songs.forEach { song ->
+            val mediaUri = song.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI) ?: return@forEach
             val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource( MediaItem.fromUri(
-                    song.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)
-                ))
+                .createMediaSource(MediaItem.fromUri(mediaUri))
             concatenatingMediaSource.addMediaSource(mediaSource)
         }
 
@@ -62,13 +61,15 @@ class BackendMusicSource  @Inject constructor(
     }
 
 
-    fun asMediaItems() = songs.map { song ->
+    fun asMediaItems() = songs.mapNotNull { song ->
+        val mediaUri = song.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI) ?: return@mapNotNull null
+        val iconUri = song.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI)
         val desc = MediaDescriptionCompat.Builder()
-            .setMediaUri(song.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI).toUri())
+            .setMediaUri(mediaUri.toUri())
             .setTitle(song.description.title)
             .setSubtitle(song.description.subtitle)
             .setMediaId(song.description.mediaId)
-            .setIconUri(song.description.iconUri)
+            .setIconUri(iconUri?.toUri())
             .build()
         MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
     }.toMutableList()

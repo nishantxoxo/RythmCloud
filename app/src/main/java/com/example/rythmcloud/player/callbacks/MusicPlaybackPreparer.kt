@@ -21,11 +21,8 @@ class MusicPlaybackPreparer(
     ) = false
 
     override fun getSupportedPrepareActions(): Long {
-        TODO("Not yet implemented")
-
         return PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID or
                 PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
-
     }
 
     override fun onPrepare(playWhenReady: Boolean)  = Unit

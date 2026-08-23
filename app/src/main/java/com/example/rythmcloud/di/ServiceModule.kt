@@ -35,15 +35,14 @@ object ServiceModule {
     fun provideExoPlayer(
         @ApplicationContext context: Context,
         audioAttributes: AudioAttributes
-    ) = SimpleExoPlayer.Builder(context).build().apply {
+    ): com.google.android.exoplayer2.ExoPlayer = SimpleExoPlayer.Builder(context).build().apply {
         setAudioAttributes(audioAttributes, true)
         setHandleAudioBecomingNoisy(true)
     }
-
 
     @ServiceScoped
     @Provides
     fun provideDataSourceFactory(
         @ApplicationContext context: Context
-    ) = DefaultDataSourceFactory(context, Util.getUserAgent(context, "RythmCloud"))
+    ): DefaultDataSourceFactory = DefaultDataSourceFactory(context, Util.getUserAgent(context, "RythmCloud"))
 }

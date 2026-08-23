@@ -11,9 +11,9 @@ class MusicDatabase {
 
     suspend fun getAllSongs(): List<Song> {
         return try {
-        api.getAllSongs()
-        //            songCollection.get().await().toObjects(Song::class.java)
-        } catch(e: Exception) {
+            api.getAllSongs()
+        } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }

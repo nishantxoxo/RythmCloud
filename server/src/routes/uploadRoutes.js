@@ -10,7 +10,7 @@ const {
 const {
     uploadAudio: audioMiddleware,
     uploadImage: imageMiddleware
-} = require("../middleware/upload");
+} = require("../middlewares/uploads");
 
 router.post(
     "/audio",

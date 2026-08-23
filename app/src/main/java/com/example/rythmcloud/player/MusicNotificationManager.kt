@@ -46,22 +46,25 @@ class MusicNotificationManager(
         private val mediaController: MediaControllerCompat
     ): PlayerNotificationManager.MediaDescriptionAdapter {
         override fun getCurrentContentTitle(player: com.google.android.exoplayer2.Player): CharSequence {
-//            newSongCallback()
-            return mediaController.metadata.description.title.toString()
+            return mediaController.metadata?.description?.title?.toString() ?: "RythmCloud"
         }
 
         override fun createCurrentContentIntent(player: com.google.android.exoplayer2.Player) =
             mediaController.sessionActivity
 
-        override fun getCurrentContentText(player: com.google.android.exoplayer2.Player) =
-            mediaController.metadata.description.subtitle.toString()
+        override fun getCurrentContentText(player: com.google.android.exoplayer2.Player): CharSequence {
+            return mediaController.metadata?.description?.subtitle?.toString() ?: ""
+        }
 
         override fun getCurrentLargeIcon(
             player: com.google.android.exoplayer2.Player,
             callback: PlayerNotificationManager.BitmapCallback
         ) : Bitmap? {
+            val iconUri = mediaController.metadata?.description?.iconUri
+            if (iconUri == null) return null
+
             Glide.with(context).asBitmap()
-                .load(mediaController.metadata.description.iconUri)
+                .load(iconUri)
                 .into(object : com.bumptech.glide.request.target.CustomTarget<Bitmap>() {
                     override fun onResourceReady(
                         resource: Bitmap,
@@ -72,6 +75,7 @@ class MusicNotificationManager(
 
                     override fun onLoadCleared(placeholder: Drawable?) {}
                 })
+            return null
         }
     }
 }

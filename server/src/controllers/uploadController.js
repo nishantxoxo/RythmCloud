@@ -5,7 +5,7 @@ const uploadAudio = (req, res) => {
         });
     }
 
-    const url = `http://localhost:5000/uploads/audio/${req.file.filename}`;
+    const url = `${process.env.SERVER_URL}/uploads/audio/${req.file.filename}`;
 
     res.json({
         url
@@ -19,7 +19,7 @@ const uploadImage = (req, res) => {
         });
     }
 
-    const url = `http://localhost:5000/uploads/images/${req.file.filename}`;
+    const url = `${process.env.SERVER_URL}/uploads/images/${req.file.filename}`;
 
     res.json({
         url

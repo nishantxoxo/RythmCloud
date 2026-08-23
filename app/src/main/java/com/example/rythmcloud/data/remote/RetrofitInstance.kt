@@ -4,8 +4,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    private const val BASEURL = "http://192.168.1.5:5000/"
-
+    
+    private const val BASEURL = "http://10.126.15.98:5000/"
+    //ipconfig
     val api : SongApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASEURL)
