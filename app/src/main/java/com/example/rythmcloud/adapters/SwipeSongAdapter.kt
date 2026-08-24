@@ -11,11 +11,10 @@ import com.bumptech.glide.RequestManager
 import com.example.rythmcloud.R
 import com.example.rythmcloud.data.entities.Song
 import com.example.rythmcloud.databinding.ListItemBinding
+import com.example.rythmcloud.databinding.SwipeItemBinding
 import javax.inject.Inject
 
-class SongAdapter @Inject constructor(
-    private val glide: RequestManager
-): BaseSongAdapter(R.layout.list_item) {
+class SwipeSongAdapter: BaseSongAdapter(R.layout.swipe_item) {
 //    class SongViewHolder(itemview: View) : RecyclerView.ViewHolder(itemview)
 
 
@@ -28,13 +27,17 @@ class SongAdapter @Inject constructor(
     ) {
         val song = songs[position]
 
-        val binding = ListItemBinding.bind(holder.itemView)
-
+        val binding = SwipeItemBinding.bind(holder.itemView)
+        val text = "${song.title} - ${song.subtitle}"
         binding.tvPrimary.text = song.title
-        binding.tvSecondary.text = song.subtitle
-        glide.load(song.imageUri).into(binding.ivItemImage)
+//        binding.tvSecondary.text = song.subtitle
+
 
         holder.itemView.setOnClickListener {
+
+
+
+
             onItemClickListener?.let { click ->
                 click(song)
             }

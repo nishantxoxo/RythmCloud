@@ -5,6 +5,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.example.rythmcloud.R
+import com.example.rythmcloud.adapters.SwipeSongAdapter
 import com.example.rythmcloud.player.MusicServiceConnection
 import dagger.Module
 import dagger.Provides
@@ -23,6 +24,12 @@ object AppModule {
     fun provideMusicServiceConnection(
         @ApplicationContext context: Context
     ) = MusicServiceConnection(context)
+
+
+    @Singleton
+    @Provides
+    fun provideSwipeSongAdapter() = SwipeSongAdapter()
+
 
 
     @Singleton
