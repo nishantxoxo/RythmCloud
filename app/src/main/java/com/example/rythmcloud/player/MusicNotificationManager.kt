@@ -46,6 +46,7 @@ class MusicNotificationManager(
         private val mediaController: MediaControllerCompat
     ): PlayerNotificationManager.MediaDescriptionAdapter {
         override fun getCurrentContentTitle(player: com.google.android.exoplayer2.Player): CharSequence {
+            newSongCallback()
             return mediaController.metadata?.description?.title?.toString() ?: "RythmCloud"
         }
 
