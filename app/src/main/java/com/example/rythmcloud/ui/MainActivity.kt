@@ -1,165 +1,101 @@
 package com.example.rythmcloud.ui
 
 import android.os.Bundle
-import android.support.v4.media.session.PlaybackStateCompat
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
-import androidx.navigation.findNavController
-import androidx.viewpager2.widget.ViewPager2
-import com.bumptech.glide.RequestManager
-import com.example.rythmcloud.R
-import com.example.rythmcloud.adapters.SwipeSongAdapter
-import com.example.rythmcloud.data.entities.Song
-import com.example.rythmcloud.databinding.ActivityMainBinding
-import com.example.rythmcloud.other.Status
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.rythmcloud.player.isPlaying
 import com.example.rythmcloud.player.toSong
+import com.example.rythmcloud.ui.components.BottomPlayerBar
+import com.example.rythmcloud.ui.screens.HomeScreen
+import com.example.rythmcloud.ui.screens.SongScreen
 import com.example.rythmcloud.ui.viewmodels.MainViewModel
-import com.google.android.material.snackbar.Snackbar
+import com.example.rythmcloud.ui.viewmodels.SongViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
-
-
-    @Inject
-    lateinit var swipeSongAdapter: SwipeSongAdapter
-
-
-    @Inject
-    lateinit var glide: RequestManager
-
-
-    private var curPlayingSong : Song?= null
-
-    private var playbackState: PlaybackStateCompat? = null
+class MainActivity : ComponentActivity() {
 
     private val mainViewModel: MainViewModel by viewModels()
-    private lateinit var binding: ActivityMainBinding
+    private val songViewModel: SongViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        subscribeToObservers()
 
-        binding.vpSong.adapter = swipeSongAdapter
-        binding.vpSong.registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback(){
-            override fun onPageSelected(position: Int) {
-                super.onPageSelected(position)
-                if (playbackState?.isPlaying == true){
-                    mainViewModel.playOrToggleSong(swipeSongAdapter.songs[position], true)
-                }
-                else {
-                    curPlayingSong = swipeSongAdapter.songs[position]
-                }
-            }
-        })
-
-
-        binding.ivPlayPause.setOnClickListener {
-            curPlayingSong?.let {
-                mainViewModel.playOrToggleSong(it, true)
-            }
-        }
-
-        swipeSongAdapter.setItemClickListener {
-            findNavController(R.id.navHostFragment).navigate(R.id.global_to_songFragment)
-        }
-
-
-        findNavController(R.id.navHostFragment).addOnDestinationChangedListener { _, destination, _ ->
-
-            when(destination.id){
-                R.id.songFragment -> HideBottom()
-                R.id.homeFragment -> ShowBottom()
-
-                else -> ShowBottom()
-            }
-        }
-    }
-
-
-    private fun HideBottom(){
-        binding.ivCurSongImage.isVisible = false
-        binding.ivPlayPause.isVisible = false
-        binding.vpSong.isVisible = false
-
-
-    }
-
-    private fun ShowBottom(){
-        binding.ivCurSongImage.isVisible = true
-        binding.ivPlayPause.isVisible = true
-        binding.vpSong.isVisible = true
-
-
-    }
-
-    private fun switchViewPagerToCurrentSong(song: Song){
-        val newItemIndex = swipeSongAdapter.songs.indexOf(song)
-        if(newItemIndex != -1){
-            binding.vpSong.currentItem = newItemIndex
-            curPlayingSong = song
-        }
-
-    }
-
-
-    private fun subscribeToObservers(){
-        mainViewModel.mediaItems.observe(this){
-            it?.let {
-                result->
-                when(result.status){
-                    Status.SUCCESS -> {
-                        result.data?.let {
-                            songs ->
-                            swipeSongAdapter.songs = songs
-                            if (songs.isNotEmpty()){
-                                glide.load((curPlayingSong ?: songs[0]).imageUri).into(binding.ivCurSongImage)
-                            }
-
-                            switchViewPagerToCurrentSong(curPlayingSong ?: return@observe)
-                        }
-                    }
-                    Status.ERROR -> Unit
-                    Status.LOADING -> Unit
-                }
-            }
-        }
-
-        mainViewModel.curPlayingSong.observe(this) {
-            if (it == null) return@observe
-
-            curPlayingSong = it.toSong()
-            glide.load(curPlayingSong?.imageUri).into(binding.ivCurSongImage)
-            switchViewPagerToCurrentSong(curPlayingSong ?: return@observe)
-        }
-
-        mainViewModel.playbackState.observe(this) {
-            playbackState = it
-            binding.ivPlayPause.setImageResource(
-                if(playbackState?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play
+        setContent {
+            val navController = rememberNavController()
+            MusicNavHost(
+                navController = navController,
+                mainViewModel = mainViewModel,
+                songViewModel = songViewModel
             )
-//            binding.vpSong.isUserInputEnabled = it?.isPlaying == true
         }
-        mainViewModel.isConnected.observe(this){
+    }
+}
 
-            it?.getContentIfNotHandled()?.let { result ->
-                when(result.status){
-                    Status.SUCCESS -> Unit
-                    Status.ERROR -> Snackbar.make(binding.rootLayout, result.message ?: "An Unknown error occurred",
-                        Snackbar.LENGTH_LONG
-                        ).show()
-                    Status.LOADING -> Unit
-                    else -> Unit
-                }
+@Composable
+fun MusicNavHost(
+    navController: NavHostController,
+    mainViewModel: MainViewModel,
+    songViewModel: SongViewModel,
+) {
+    val currentSong by mainViewModel.curPlayingSong.observeAsState()
+    val playbackState by mainViewModel.playbackState.observeAsState()
+    val currentSongModel = currentSong?.toSong()
+    val currentPosition by songViewModel.curPlayerPos.observeAsState(initial = 0L)
+    val currentDuration by songViewModel.curSongDuration.observeAsState(initial = 0L)
+    val isPlaying = playbackState?.isPlaying == true
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            BottomPlayerBar(
+                song = currentSongModel,
+                currentPosition = currentPosition,
+                totalDuration = currentDuration,
+                isPlaying = isPlaying,
+                onPlayPause = { currentSongModel?.let { mainViewModel.playOrToggleSong(it, true) } },
+                onSkipPrevious = { mainViewModel.skipToPrevSong() },
+                onSkipNext = { mainViewModel.skipToNextSong() },
+                onSeek = { mainViewModel.seekTo(it) }
+            )
+        }
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            composable("home") {
+                HomeScreen(
+                    mainViewModel = mainViewModel,
+                    onSongClick = { song ->
+                        mainViewModel.playOrToggleSong(song)
+                        navController.navigate("song")
+                    }
+                )
+            }
+
+            composable("song") {
+                SongScreen(
+                    mainViewModel = mainViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }
-
-
 }
+
