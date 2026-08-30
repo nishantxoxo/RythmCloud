@@ -45,6 +45,8 @@ private var _binding: FragmentSongBinding? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentSongBinding.bind(view)
+
         mainViewModel = ViewModelProvider(requireActivity()).get(MainViewModel::class.java)
 
         subscribeToObservers()
@@ -130,7 +132,7 @@ private var _binding: FragmentSongBinding? = null
                 binding.ivPlayPauseDetail.setImageResource(
                     if (playbackState.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
                 )
-                binding.seekBar.progress = it?.position?.toInt() ?: 0
+                binding.seekBar.progress = playbackState.position.toInt()
             }
         }
 
@@ -143,15 +145,25 @@ private var _binding: FragmentSongBinding? = null
 
         songViewModel.curSongDuration.observe(viewLifecycleOwner){
             binding.seekBar.max = it.toInt()
-            val dateFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
-            binding.tvSongDuration.text = dateFormat.format(it)
+            binding.tvSongDuration.text = formatDuration(it)
         }
 
     }
 
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     private fun setCurPlayerTimeToTextView(ms: Long){
-        val dateFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
-        binding.tvCurTime.text = dateFormat.format(ms)
+        binding.tvCurTime.text = formatDuration(ms)
+    }
+
+    private fun formatDuration(ms: Long): String {
+        val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
     }
 }

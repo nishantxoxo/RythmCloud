@@ -32,6 +32,14 @@ class MusicServiceConnection(
 
     lateinit var mediaController: MediaControllerCompat
 
+    fun getCurrentPlaybackPosition(): Long {
+        return if (::mediaController.isInitialized) {
+            mediaController.playbackState?.position ?: 0L
+        } else {
+            0L
+        }
+    }
+
     private val mediaBrowserConnectionCallback = MediaBrowserConnectionCallback(context)
 
     private val mediaBrowser = MediaBrowserCompat(

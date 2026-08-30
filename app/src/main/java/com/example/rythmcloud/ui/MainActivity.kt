@@ -6,7 +6,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.RequestManager
 import com.example.rythmcloud.R
@@ -42,7 +42,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         subscribeToObservers()
 
         binding.vpSong.adapter = swipeSongAdapter
@@ -66,11 +67,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         swipeSongAdapter.setItemClickListener {
-            NavHostFragment.findNavController().navigate(R.id.global_to_songFragment)
+            findNavController(R.id.navHostFragment).navigate(R.id.global_to_songFragment)
         }
 
 
-        NavHostFragment.findNavController().addOnDestinationChangedListener { _, destination, _ ->
+        findNavController(R.id.navHostFragment).addOnDestinationChangedListener { _, destination, _ ->
 
             when(destination.id){
                 R.id.songFragment -> HideBottom()
