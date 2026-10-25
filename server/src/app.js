@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 // app.use("/uploads", express.static("uploads"));
 // Make uploaded files accessible
-app.use("/uploads", express.static("uploads"));
+// app.use("/uploads", express.static("uploads"));
 
 app.use("/upload", uploadRoutes);
 app.use("/songs", songRoutes);

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.rythmcloud.player.isPlaying
 import com.example.rythmcloud.player.toSong
@@ -58,20 +59,24 @@ fun MusicNavHost(
     val currentPosition by songViewModel.curPlayerPos.observeAsState(initial = 0L)
     val currentDuration by songViewModel.curSongDuration.observeAsState(initial = 0L)
     val isPlaying = playbackState?.isPlaying == true
+    val currentRoute by navController.currentBackStackEntryAsState()
+    val isSongScreen = currentRoute?.destination?.route == "song"
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BottomPlayerBar(
-                song = currentSongModel,
-                currentPosition = currentPosition,
-                totalDuration = currentDuration,
-                isPlaying = isPlaying,
-                onPlayPause = { currentSongModel?.let { mainViewModel.playOrToggleSong(it, true) } },
-                onSkipPrevious = { mainViewModel.skipToPrevSong() },
-                onSkipNext = { mainViewModel.skipToNextSong() },
-                onSeek = { mainViewModel.seekTo(it) }
-            )
+            if (!isSongScreen) {
+                BottomPlayerBar(
+                    song = currentSongModel,
+                    currentPosition = currentPosition,
+                    totalDuration = currentDuration,
+                    isPlaying = isPlaying,
+                    onPlayPause = { currentSongModel?.let { mainViewModel.playOrToggleSong(it, true) } },
+                    onSkipPrevious = { mainViewModel.skipToPrevSong() },
+                    onSkipNext = { mainViewModel.skipToNextSong() },
+                    onSeek = { mainViewModel.seekTo(it) }
+                )
+            }
         }
     ) { paddingValues ->
         NavHost(
@@ -98,4 +103,3 @@ fun MusicNavHost(
         }
     }
 }
-

@@ -1,5 +1,6 @@
 package com.example.rythmcloud.ui.screens
 
+import android.widget.ImageView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,9 +22,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.bumptech.glide.Glide
 import com.example.rythmcloud.data.entities.Song
 import com.example.rythmcloud.other.Status
 import com.example.rythmcloud.ui.viewmodels.MainViewModel
@@ -105,7 +109,21 @@ fun SongListItem(
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "♫", fontSize = 16.sp, color = Color.White)
+            AndroidView(
+                modifier = Modifier.size(36.dp).clip(CircleShape),
+                factory = { context ->
+                    ImageView(context).apply {
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                    }
+                },
+                update = { imageView ->
+                    if (song != null) {
+                        Glide.with(imageView.context)
+                            .load(song.imageUri)
+                            .into(imageView)
+                    }
+                }
+            )
         }
     }
 }

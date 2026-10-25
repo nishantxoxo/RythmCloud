@@ -1,32 +1,45 @@
 const multer = require("multer");
-const path = require("path");
 
-// Audio storage
-const audioStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "uploads/audio");
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
+const allowedAudioTypes = new Set([
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/ogg"
+]);
 
-// Image storage
-const imageStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "uploads/images");
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
+const allowedImageTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+]);
 
 const uploadAudio = multer({
-    storage: audioStorage
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 50 * 1024 * 1024
+    },
+    fileFilter: (req, file, callback) => {
+        if (!allowedAudioTypes.has(file.mimetype)) {
+            return callback(new Error("Unsupported audio file type"));
+        }
+
+        callback(null, true);
+    }
 });
 
 const uploadImage = multer({
-    storage: imageStorage
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024
+    },
+    fileFilter: (req, file, callback) => {
+        if (!allowedImageTypes.has(file.mimetype)) {
+            return callback(new Error("Unsupported image file type"));
+        }
+
+        callback(null, true);
+    }
 });
 
 module.exports = {

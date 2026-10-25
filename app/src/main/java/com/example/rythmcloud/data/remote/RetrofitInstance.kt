@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
     
-    private const val BASEURL = "http://10.126.15.98:5000/"
+    private const val BASEURL = "http://10.126.36.231:5000/"
     //ipconfig
     val api : SongApi by lazy {
         Retrofit.Builder()
