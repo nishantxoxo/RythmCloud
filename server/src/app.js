@@ -3,6 +3,7 @@
 const express = require("express");
 const cors = require("cors");
 
+const authRoutes = require("./routes/authRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const songRoutes = require("./routes/songRoutes");
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 // Make uploaded files accessible
 // app.use("/uploads", express.static("uploads"));
 
+app.use("/auth", authRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/songs", songRoutes);
 

@@ -6,12 +6,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,7 +27,11 @@ import com.example.rythmcloud.player.isPlaying
 import com.example.rythmcloud.player.toSong
 import com.example.rythmcloud.ui.components.BottomPlayerBar
 import com.example.rythmcloud.ui.screens.HomeScreen
+import com.example.rythmcloud.ui.screens.LoginScreen
+import com.example.rythmcloud.ui.screens.RegisterScreen
 import com.example.rythmcloud.ui.screens.SongScreen
+import com.example.rythmcloud.ui.viewmodels.AuthState
+import com.example.rythmcloud.ui.viewmodels.AuthViewModel
 import com.example.rythmcloud.ui.viewmodels.MainViewModel
 import com.example.rythmcloud.ui.viewmodels.SongViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -37,11 +47,70 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val navController = rememberNavController()
-            MusicNavHost(
-                navController = navController,
-                mainViewModel = mainViewModel,
-                songViewModel = songViewModel
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val authState by authViewModel.state.collectAsState()
+
+            when (val state = authState) {
+                AuthState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                AuthState.Unauthenticated -> {
+                    AuthNavHost(authViewModel = authViewModel)
+                }
+
+                is AuthState.Error -> {
+                    AuthNavHost(
+                        authViewModel = authViewModel,
+                        errorMessage = state.message
+                    )
+                }
+
+                is AuthState.Authenticated -> {
+                    val navController = rememberNavController()
+                    MusicNavHost(
+                        navController = navController,
+                        mainViewModel = mainViewModel,
+                        songViewModel = songViewModel
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AuthNavHost(
+    authViewModel: AuthViewModel,
+    errorMessage: String? = null
+) {
+    val navController = rememberNavController()
+    val authState by authViewModel.state.collectAsState()
+    val isLoading = authState == AuthState.Loading
+
+    NavHost(
+        navController = navController,
+        startDestination = "login"
+    ) {
+        composable("login") {
+            LoginScreen(
+                isLoading = isLoading,
+                errorMessage = errorMessage,
+                onLogin = authViewModel::login,
+                onRegister = { navController.navigate("register") }
+            )
+        }
+        composable("register") {
+            RegisterScreen(
+                isLoading = isLoading,
+                errorMessage = errorMessage,
+                onRegister = authViewModel::register,
+                onLogin = { navController.popBackStack() }
             )
         }
     }

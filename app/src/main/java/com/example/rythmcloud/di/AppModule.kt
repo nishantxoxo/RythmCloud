@@ -6,6 +6,8 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.example.rythmcloud.R
 import com.example.rythmcloud.adapters.SwipeSongAdapter
+import com.example.rythmcloud.data.auth.AuthRepository
+import com.example.rythmcloud.data.auth.TokenStore
 import com.example.rythmcloud.player.MusicServiceConnection
 import dagger.Module
 import dagger.Provides
@@ -18,6 +20,15 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+    @Singleton
+    @Provides
+    fun provideTokenStore(
+        @ApplicationContext context: Context
+    ) = TokenStore(context)
+
+    @Singleton
+    @Provides
+    fun provideAuthRepository(tokenStore: TokenStore) = AuthRepository(tokenStore)
 
     @Singleton
     @Provides
