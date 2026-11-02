@@ -29,6 +29,7 @@ import com.example.rythmcloud.ui.components.BottomPlayerBar
 import com.example.rythmcloud.ui.screens.HomeScreen
 import com.example.rythmcloud.ui.screens.LoginScreen
 import com.example.rythmcloud.ui.screens.RegisterScreen
+import com.example.rythmcloud.ui.screens.SettingsScreen
 import com.example.rythmcloud.ui.screens.SongScreen
 import com.example.rythmcloud.ui.viewmodels.AuthState
 import com.example.rythmcloud.ui.viewmodels.AuthViewModel
@@ -76,7 +77,11 @@ class MainActivity : ComponentActivity() {
                     MusicNavHost(
                         navController = navController,
                         mainViewModel = mainViewModel,
-                        songViewModel = songViewModel
+                        songViewModel = songViewModel,
+                        authViewModel = authViewModel,
+                        user = state.user,
+                        onLogout = authViewModel::logout,
+                        onDisplayNameChanged = authViewModel::updateDisplayName
                     )
                 }
             }
@@ -121,6 +126,10 @@ fun MusicNavHost(
     navController: NavHostController,
     mainViewModel: MainViewModel,
     songViewModel: SongViewModel,
+    authViewModel: AuthViewModel,
+    user: com.example.rythmcloud.data.auth.User,
+    onLogout: () -> Unit,
+    onDisplayNameChanged: (String?) -> Unit,
 ) {
     val currentSong by mainViewModel.curPlayingSong.observeAsState()
     val playbackState by mainViewModel.playbackState.observeAsState()
@@ -159,7 +168,8 @@ fun MusicNavHost(
                     onSongClick = { song ->
                         mainViewModel.playOrToggleSong(song)
                         navController.navigate("song")
-                    }
+                    },
+                    onSettingsClick = { navController.navigate("settings") }
                 )
             }
 
@@ -167,6 +177,20 @@ fun MusicNavHost(
                 SongScreen(
                     mainViewModel = mainViewModel,
                     onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("settings") {
+                val authState by authViewModel.state.collectAsState()
+                val authenticatedState = authState as? AuthState.Authenticated
+
+                SettingsScreen(
+                    user = authenticatedState?.user ?: user,
+                    isSaving = authenticatedState?.isUpdatingProfile == true,
+                    errorMessage = authenticatedState?.profileError,
+                    onBack = { navController.popBackStack() },
+                    onSaveDisplayName = onDisplayNameChanged,
+                    onLogout = onLogout
                 )
             }
         }

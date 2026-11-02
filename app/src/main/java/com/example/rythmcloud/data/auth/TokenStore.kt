@@ -18,9 +18,13 @@ class TokenStore(context: Context) {
     val accessToken: String?
         get() = preferences.getString(KEY_ACCESS_TOKEN, null)
 
+    val refreshToken: String?
+        get() = preferences.getString(KEY_REFRESH_TOKEN, null)
+
     fun saveSession(response: AuthResponse) {
         preferences.edit()
             .putString(KEY_ACCESS_TOKEN, response.accessToken)
+            .putString(KEY_REFRESH_TOKEN, response.refreshToken)
             .putString(KEY_USER_ID, response.user.id)
             .putString(KEY_EMAIL, response.user.email)
             .putString(KEY_ROLE, response.user.role)
@@ -33,6 +37,7 @@ class TokenStore(context: Context) {
 
     private companion object {
         const val KEY_ACCESS_TOKEN = "access_token"
+        const val KEY_REFRESH_TOKEN = "refresh_token"
         const val KEY_USER_ID = "user_id"
         const val KEY_EMAIL = "email"
         const val KEY_ROLE = "role"

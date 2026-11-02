@@ -15,6 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +40,7 @@ import com.example.rythmcloud.ui.viewmodels.MainViewModel
 fun HomeScreen(
     mainViewModel: MainViewModel,
     onSongClick: (Song) -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     val songsResource by mainViewModel.mediaItems.observeAsState(initial = null)
     val songs = songsResource?.data.orEmpty()
@@ -60,17 +65,35 @@ fun HomeScreen(
         }
 
         else -> {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(songs) { song ->
-                    SongListItem(
-                        song = song,
-                        onClick = { onSongClick(song) }
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 8.dp, top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "RythmCloud",
+                        style = MaterialTheme.typography.headlineSmall
                     )
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(songs) { song ->
+                        SongListItem(
+                            song = song,
+                            onClick = { onSongClick(song) }
+                        )
+                    }
                 }
             }
         }

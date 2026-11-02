@@ -14,7 +14,11 @@ import kotlinx.coroutines.launch
 sealed interface AuthState {
     data object Loading : AuthState
     data object Unauthenticated : AuthState
-    data class Authenticated(val user: User) : AuthState
+    data class Authenticated(
+        val user: User,
+        val isUpdatingProfile: Boolean = false,
+        val profileError: String? = null
+    ) : AuthState
     data class Error(val message: String) : AuthState
 }
 
@@ -42,8 +46,34 @@ class AuthViewModel @Inject constructor(
     }
 
     fun logout() {
-        repository.logout()
-        _state.value = AuthState.Unauthenticated
+        viewModelScope.launch {
+            repository.logoutRemotely()
+            _state.value = AuthState.Unauthenticated
+        }
+    }
+
+    fun updateDisplayName(displayName: String?) {
+        val currentState = _state.value
+        if (currentState !is AuthState.Authenticated || currentState.isUpdatingProfile) {
+            return
+        }
+
+        viewModelScope.launch {
+            _state.value = currentState.copy(
+                isUpdatingProfile = true,
+                profileError = null
+            )
+            repository.updateDisplayName(displayName)
+                .onSuccess { user ->
+                    _state.value = AuthState.Authenticated(user)
+                }
+                .onFailure { error ->
+                    _state.value = AuthState.Authenticated(
+                        user = currentState.user,
+                        profileError = error.message ?: "Failed to update profile"
+                    )
+                }
+        }
     }
 
     private fun restoreSession() {

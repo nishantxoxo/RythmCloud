@@ -2,7 +2,9 @@ const bcrypt = require("bcrypt");
 const prisma = require("../config/db");
 const {
     createAccessToken,
-    toPublicUser
+    toPublicUser,
+    createRefreshToken,
+    hashRefreshToken
 } = require("../services/authService");
 
 const normalizeEmail = (email) => email.trim().toLowerCase();
@@ -47,10 +49,12 @@ const register = async (req, res) => {
                 displayName: displayName?.trim() || null
             }
         });
+        const refreshToken = await createRefreshToken(prisma, user.id);
 
         return res.status(201).json({
             user: toPublicUser(user),
-            accessToken: createAccessToken(user)
+            accessToken: createAccessToken(user),
+            refreshToken
         });
     } catch (error) {
         if (error.code === "P2002") {
@@ -92,10 +96,12 @@ const login = async (req, res) => {
                 message: "Invalid email or password"
             });
         }
+        const refreshToken = await createRefreshToken(prisma, user.id);
 
         return res.json({
             user: toPublicUser(user),
-            accessToken: createAccessToken(user)
+            accessToken: createAccessToken(user),
+            refreshToken
         });
     } catch (error) {
         console.error("User login failed:", error);
@@ -111,8 +117,104 @@ const getCurrentUser = (req, res) => {
     });
 };
 
+const updateCurrentUser = async (req, res) => {
+    const { displayName } = req.body;
+
+    if (displayName !== null && typeof displayName !== "string") {
+        return res.status(400).json({
+            message: "Display name must be a string or null"
+        });
+    }
+
+    try {
+        const user = await prisma.user.update({
+            where: {
+                id: req.user.id
+            },
+            data: {
+                displayName: displayName?.trim() || null
+            }
+        });
+
+        return res.json({
+            user: toPublicUser(user)
+        });
+    } catch (error) {
+        console.error("Profile update failed:", error);
+        return res.status(500).json({
+            message: "Failed to update profile"
+        });
+    }
+};
+
+const refresh = async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (typeof refreshToken !== "string" || !refreshToken) {
+        return res.status(401).json({ message: "Refresh token required" });
+    }
+
+    try {
+        const storedToken = await prisma.refreshToken.findUnique({
+            where: { tokenHash: hashRefreshToken(refreshToken) },
+            include: { user: true }
+        });
+
+        if (
+            !storedToken ||
+            storedToken.revokedAt ||
+            storedToken.expiresAt <= new Date()
+        ) {
+            return res.status(401).json({ message: "Invalid refresh token" });
+        }
+
+        const replacementToken = await prisma.$transaction(async (transaction) => {
+            await transaction.refreshToken.update({
+                where: { id: storedToken.id },
+                data: { revokedAt: new Date() }
+            });
+
+            return createRefreshToken(transaction, storedToken.userId);
+        });
+
+        return res.json({
+            user: toPublicUser(storedToken.user),
+            accessToken: createAccessToken(storedToken.user),
+            refreshToken: replacementToken
+        });
+    } catch (error) {
+        console.error("Token refresh failed:", error);
+        return res.status(500).json({ message: "Failed to refresh session" });
+    }
+};
+
+const logout = async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (typeof refreshToken !== "string" || !refreshToken) {
+        return res.status(204).send();
+    }
+
+    try {
+        await prisma.refreshToken.updateMany({
+            where: {
+                tokenHash: hashRefreshToken(refreshToken),
+                revokedAt: null
+            },
+            data: { revokedAt: new Date() }
+        });
+        return res.status(204).send();
+    } catch (error) {
+        console.error("Logout failed:", error);
+        return res.status(500).json({ message: "Failed to log out" });
+    }
+};
+
 module.exports = {
     register,
     login,
-    getCurrentUser
+    getCurrentUser,
+    updateCurrentUser,
+    refresh,
+    logout
 };

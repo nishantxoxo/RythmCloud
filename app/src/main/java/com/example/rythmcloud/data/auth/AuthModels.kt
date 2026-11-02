@@ -13,8 +13,13 @@ data class LoginRequest(
 
 data class AuthResponse(
     val user: User,
-    val accessToken: String
+    val accessToken: String,
+    val refreshToken: String
 )
+
+data class RefreshRequest(val refreshToken: String)
+
+data class UpdateProfileRequest(val displayName: String?)
 
 data class CurrentUserResponse(
     val user: User

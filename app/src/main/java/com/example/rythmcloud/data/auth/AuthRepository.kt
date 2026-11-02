@@ -31,7 +31,18 @@ class AuthRepository(
         api.getCurrentUser().user
     }
 
+    suspend fun updateDisplayName(displayName: String?): Result<User> = runCatching {
+        api.updateCurrentUser(UpdateProfileRequest(displayName)).user
+    }
+
     fun logout() {
+        tokenStore.clear()
+    }
+
+    suspend fun logoutRemotely() {
+        tokenStore.refreshToken?.let {
+            runCatching { api.logout(RefreshRequest(it)) }
+        }
         tokenStore.clear()
     }
 }
