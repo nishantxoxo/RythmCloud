@@ -16,7 +16,10 @@ const createSong = async (req, res) => {
 
 const getAllSongs = async (req, res) => {
     try {
-        const songs = await songService.getAllSongs();
+        const query = typeof req.query.query === "string"
+            ? req.query.query.trim()
+            : "";
+        const songs = await songService.getAllSongs(query);
 
         res.json(songs);
     } catch (error) {

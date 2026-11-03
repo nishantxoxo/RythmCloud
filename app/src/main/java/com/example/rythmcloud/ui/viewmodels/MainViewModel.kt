@@ -5,7 +5,9 @@ import android.support.v4.media.MediaBrowserCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.rythmcloud.data.entities.Song
+import com.example.rythmcloud.data.remote.RetrofitInstance
 import com.example.rythmcloud.other.Constants.MEDIA_ROOT_ID
 import com.example.rythmcloud.other.Resource
 import com.example.rythmcloud.player.MusicServiceConnection
@@ -14,6 +16,8 @@ import com.example.rythmcloud.player.isPlaying
 import com.example.rythmcloud.player.isPrepared
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 
 @HiltViewModel
@@ -22,6 +26,9 @@ class MainViewModel @Inject constructor(
 ) : ViewModel(){
     private val  _mediaItems = MutableLiveData<Resource<List<Song>>>()
     val mediaItems : LiveData<Resource<List<Song>>> = _mediaItems
+    private val _searchResults = MutableLiveData<Resource<List<Song>>>()
+    val searchResults: LiveData<Resource<List<Song>>> = _searchResults
+    private var searchJob: Job? = null
 
 
     val isConnected = musicServiceConnection.isConnected
@@ -79,10 +86,36 @@ class MainViewModel @Inject constructor(
                     playbackState.isPlayEnabled -> musicServiceConnection.transportControls.play()
                     else -> Unit
                 }
+
             }
         } else {
             musicServiceConnection.transportControls.playFromMediaId(mediaItem.mediaId, null)
         }
+    }
+
+    fun searchSongs(query: String) {
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _searchResults.value = Resource.success(emptyList())
+            return
+        }
+
+        searchJob = viewModelScope.launch {
+            _searchResults.value = Resource.loading(null)
+            runCatching { RetrofitInstance.api.getAllSongs(query.trim()) }
+                .onSuccess { _searchResults.value = Resource.success(it) }
+                .onFailure {
+                    _searchResults.value = Resource.error(
+                        it.message ?: "Failed to search songs",
+                        null
+                    )
+                }
+        }
+    }
+
+    fun clearSearch() {
+        searchJob?.cancel()
+        _searchResults.value = Resource.success(emptyList())
     }
 
 

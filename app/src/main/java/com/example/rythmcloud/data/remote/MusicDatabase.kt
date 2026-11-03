@@ -17,4 +17,8 @@ class MusicDatabase {
             emptyList()
         }
     }
+
+    suspend fun searchSongs(query: String): List<Song> {
+        return api.getAllSongs(query)
+    }
 }

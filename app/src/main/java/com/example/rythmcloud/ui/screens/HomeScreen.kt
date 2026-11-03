@@ -14,16 +14,25 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +44,10 @@ import com.bumptech.glide.Glide
 import com.example.rythmcloud.data.entities.Song
 import com.example.rythmcloud.other.Status
 import com.example.rythmcloud.ui.viewmodels.MainViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun HomeScreen(
@@ -43,45 +56,95 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
 ) {
     val songsResource by mainViewModel.mediaItems.observeAsState(initial = null)
-    val songs = songsResource?.data.orEmpty()
-    val isLoading = songsResource == null || songsResource!!.status == Status.LOADING
-    val isEmpty = !isLoading && songs.isEmpty()
+    val searchResource by mainViewModel.searchResults.observeAsState(initial = null)
+    var query by remember { mutableStateOf("") }
+    val isSearching = query.isNotBlank()
+    val songs = if (isSearching) {
+        searchResource?.data.orEmpty()
+    } else {
+        songsResource?.data.orEmpty()
+    }
+    val isLoading = songsResource == null || songsResource?.status == Status.LOADING
+    val isSearchLoading = isSearching && searchResource?.status == Status.LOADING
+    val searchError = isSearching && searchResource?.status == Status.ERROR
 
-    when {
-        isLoading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    @OptIn(FlowPreview::class)
+    LaunchedEffect(Unit) {
+        snapshotFlow { query }
+            .debounce(350)
+            .distinctUntilChanged()
+            .collectLatest { value ->
+                if (value.isBlank()) {
+                    mainViewModel.clearSearch()
+                } else {
+                    mainViewModel.searchSongs(value)
+                }
+            }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 8.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("RythmCloud", style = MaterialTheme.typography.headlineSmall)
+            IconButton(onClick = onSettingsClick) {
+                Icon(Icons.Filled.Settings, contentDescription = "Settings")
             }
         }
 
-        isEmpty -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "No songs available",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-        }
-
-        else -> {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 8.dp, top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "RythmCloud",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            singleLine = true,
+            leadingIcon = {
+                Icon(Icons.Filled.Search, contentDescription = "Search")
+            },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { query = "" }) {
+                        Icon(Icons.Filled.Clear, contentDescription = "Clear search")
                     }
                 }
+            },
+            placeholder = { Text("Search songs or artists") }
+        )
 
+        when {
+            isLoading || isSearchLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            searchError -> {
+                SearchMessage(
+                    message = "Search failed",
+                    actionLabel = "Retry",
+                    onAction = { mainViewModel.searchSongs(query) }
+                )
+            }
+
+            songs.isEmpty() -> {
+                SearchMessage(
+                    message = if (isSearching) "No matching songs" else "No songs available",
+                    actionLabel = if (isSearching) null else "Retry",
+                    onAction = if (isSearching) null else {
+                        { mainViewModel.clearSearch() }
+                    }
+                )
+            }
+
+            else -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -89,11 +152,33 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(songs) { song ->
-                        SongListItem(
-                            song = song,
-                            onClick = { onSongClick(song) }
-                        )
+                        SongListItem(song = song, onClick = { onSongClick(song) })
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchMessage(
+    message: String,
+    actionLabel: String?,
+    onAction: (() -> Unit)?
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            if (actionLabel != null && onAction != null) {
+                IconButton(onClick = onAction) {
+                    Icon(Icons.Filled.Refresh, contentDescription = actionLabel)
                 }
             }
         }
@@ -115,13 +200,9 @@ fun SongListItem(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
+            Text(song.title, style = MaterialTheme.typography.titleMedium)
             Text(
-                text = song.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = song.subtitle,
+                song.subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -140,11 +221,7 @@ fun SongListItem(
                     }
                 },
                 update = { imageView ->
-                    if (song != null) {
-                        Glide.with(imageView.context)
-                            .load(song.imageUri)
-                            .into(imageView)
-                    }
+                    Glide.with(imageView.context).load(song.imageUri).into(imageView)
                 }
             )
         }

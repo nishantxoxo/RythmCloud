@@ -6,8 +6,18 @@ const createSong = async (songData) => {
     });
 };
 
-const getAllSongs = async () => {
+const getAllSongs = async (query = "") => {
     return await prisma.song.findMany({
+        ...(query
+            ? {
+                where: {
+                    OR: [
+                        { title: { contains: query, mode: "insensitive" } },
+                        { subtitle: { contains: query, mode: "insensitive" } }
+                    ]
+                }
+            }
+            : {}),
         orderBy: {
             id: "asc"
         }
