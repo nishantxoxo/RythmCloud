@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.Glide
@@ -42,7 +41,7 @@ fun BottomPlayerBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF1E1E1E))
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Row(
@@ -71,12 +70,12 @@ fun BottomPlayerBar(
             ) {
                 Text(
                     text = song?.title ?: "No song selected",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleSmall
                 )
                 Text(
                     text = song?.subtitle ?: "",
-                    color = Color.White.copy(alpha = 0.75f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -86,19 +85,19 @@ fun BottomPlayerBar(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 IconButton(onClick = onSkipPrevious) {
-                    Icon(Icons.Filled.SkipPrevious, contentDescription = "Previous", tint = Color.White)
+                    Icon(Icons.Filled.SkipPrevious, contentDescription = "Previous", tint = MaterialTheme.colorScheme.primary)
                 }
 
                 IconButton(onClick = onPlayPause) {
                     Icon(
                         if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 IconButton(onClick = onSkipNext) {
-                    Icon(Icons.Filled.SkipNext, contentDescription = "Next", tint = Color.White)
+                    Icon(Icons.Filled.SkipNext, contentDescription = "Next", tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -114,8 +113,8 @@ fun BottomPlayerBar(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = formatDuration(currentPosition), color = Color.White.copy(alpha = 0.8f))
-            Text(text = formatDuration(totalDuration), color = Color.White.copy(alpha = 0.8f))
+            Text(text = formatDuration(currentPosition), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = formatDuration(totalDuration), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

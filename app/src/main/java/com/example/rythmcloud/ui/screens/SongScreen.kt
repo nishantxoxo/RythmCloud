@@ -31,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -69,12 +68,12 @@ fun SongScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF101010)),
+                    .background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "No song selected",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -84,7 +83,7 @@ fun SongScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF101010))
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(16.dp)
             ) {
                 Column(
@@ -97,7 +96,7 @@ fun SongScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
 
@@ -121,12 +120,12 @@ fun SongScreen(
 
                     Text(
                         text = song.title,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.headlineSmall
                     )
                     Text(
                         text = song.subtitle,
-                        color = Color.White.copy(alpha = 0.75f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -150,8 +149,8 @@ fun SongScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = formatDuration(currentPosition), color = Color.White)
-                        Text(text = formatDuration(currentDuration), color = Color.White)
+                        Text(text = formatDuration(currentPosition), color = MaterialTheme.colorScheme.onBackground)
+                        Text(text = formatDuration(currentDuration), color = MaterialTheme.colorScheme.onBackground)
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -161,7 +160,7 @@ fun SongScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = { mainViewModel.skipToPrevSong() }) {
-                            Icon(Icons.Filled.SkipPrevious, contentDescription = "Previous", tint = Color.White)
+                            Icon(Icons.Filled.SkipPrevious, contentDescription = "Previous", tint = MaterialTheme.colorScheme.primary)
                         }
 
                         IconButton(
@@ -171,13 +170,13 @@ fun SongScreen(
                             Icon(
                                 if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = Color.White,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
 
                         IconButton(onClick = { mainViewModel.skipToNextSong() }) {
-                            Icon(Icons.Filled.SkipNext, contentDescription = "Next", tint = Color.White)
+                            Icon(Icons.Filled.SkipNext, contentDescription = "Next", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

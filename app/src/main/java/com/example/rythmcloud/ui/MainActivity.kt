@@ -48,41 +48,43 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val authViewModel: AuthViewModel = hiltViewModel()
-            val authState by authViewModel.state.collectAsState()
+            RythmCloudTheme {
+                val authViewModel: AuthViewModel = hiltViewModel()
+                val authState by authViewModel.state.collectAsState()
 
-            when (val state = authState) {
-                AuthState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                when (val state = authState) {
+                    AuthState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
 
-                AuthState.Unauthenticated -> {
-                    AuthNavHost(authViewModel = authViewModel)
-                }
+                    AuthState.Unauthenticated -> {
+                        AuthNavHost(authViewModel = authViewModel)
+                    }
 
-                is AuthState.Error -> {
-                    AuthNavHost(
-                        authViewModel = authViewModel,
-                        errorMessage = state.message
-                    )
-                }
+                    is AuthState.Error -> {
+                        AuthNavHost(
+                            authViewModel = authViewModel,
+                            errorMessage = state.message
+                        )
+                    }
 
-                is AuthState.Authenticated -> {
-                    val navController = rememberNavController()
-                    MusicNavHost(
-                        navController = navController,
-                        mainViewModel = mainViewModel,
-                        songViewModel = songViewModel,
-                        authViewModel = authViewModel,
-                        user = state.user,
-                        onLogout = authViewModel::logout,
-                        onDisplayNameChanged = authViewModel::updateDisplayName
-                    )
+                    is AuthState.Authenticated -> {
+                        val navController = rememberNavController()
+                        MusicNavHost(
+                            navController = navController,
+                            mainViewModel = mainViewModel,
+                            songViewModel = songViewModel,
+                            authViewModel = authViewModel,
+                            user = state.user,
+                            onLogout = authViewModel::logout,
+                            onDisplayNameChanged = authViewModel::updateDisplayName
+                        )
+                    }
                 }
             }
         }
