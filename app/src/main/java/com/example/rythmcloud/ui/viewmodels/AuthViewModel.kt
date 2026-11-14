@@ -11,17 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed interface AuthState {
-    data object Loading : AuthState
-    data object Unauthenticated : AuthState
-    data class Authenticated(
-        val user: User,
-        val isUpdatingProfile: Boolean = false,
-        val profileError: String? = null
-    ) : AuthState
-    data class Error(val message: String) : AuthState
-}
-
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val repository: AuthRepository
