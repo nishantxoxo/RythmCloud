@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -92,7 +94,7 @@ fun HomeScreen(
         ) {
             Text("RythmCloud", style = MaterialTheme.typography.headlineSmall)
             IconButton(onClick = onSettingsClick) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                Icon(Icons.Filled.AccountCircle, contentDescription = "Settings")
             }
         }
 
@@ -106,6 +108,7 @@ fun HomeScreen(
             leadingIcon = {
                 Icon(Icons.Filled.Search, contentDescription = "Search")
             },
+            shape = RoundedCornerShape(100),
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { query = "" }) {
